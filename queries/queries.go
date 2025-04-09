@@ -14,8 +14,8 @@ const (
 	MARKET_RATE = `
 		query ($countryCode: String!) {
 				marketRate(countryCode: $countryCode) {
-				depositRate
-				withdrawalRate
+					depositRate
+					withdrawalRate
 			}
 		}
 	`
@@ -57,6 +57,7 @@ const (
 			}
 		}
 	`
+	
 	PAYMENT_REQUEST = `
 		query ($reference: String!) {
 			merchantPaymentRequest(reference: $reference) {
@@ -70,6 +71,7 @@ const (
 			}
 		}
 	`
+	
 	ACCOUNT = `
 		query {
 			account {
@@ -80,3 +82,4 @@ const (
 		}
 	`
 )
+
