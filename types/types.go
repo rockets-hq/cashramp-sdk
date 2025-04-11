@@ -32,10 +32,10 @@ type PaymentMethodTypes struct {
 }
 
 type RampableAssets struct {
-	Name            string `json:"name"`
-	Symbol          string `json:"symbol"`
-	Networks        string `json:"networks"`
-	ContractAddress string `json:"contractAddress"`
+	Name            string   `json:"name"`
+	Symbol          string   `json:"symbol"`
+	Networks        []string `json:"networks"`
+	ContractAddress string   `json:"contractAddress"`
 }
 
 type RampLimits struct {
@@ -62,9 +62,15 @@ type Account struct {
 	DepositAddress string  `json:"depositAddress"`
 }
 
-type HostedPayment struct {
+type ConfirmTransactionInput struct {
+	PaymentRequest  string `json:"paymentRequest"`
+	TransactionHash string `json:"transactionHash"`
+}
+
+type InitiateHostedPaymentInput struct {
 	PaymentType string  `json:"paymentType"`
 	Amount      float64 `json:"amount"`
+	Currency    string  `json:"currency"`
 	CountryCode string  `json:"countryCode"`
 	Reference   string  `json:"reference"`
 	RedirectUrl string  `json:"redirectUrl"`
@@ -73,17 +79,21 @@ type HostedPayment struct {
 	Email       string  `json:"email"`
 }
 
+type CancelHostedPaymentInput struct {
+	PaymentRequest string `json:"paymentRequest"`
+}
+
 type HostedPaymentResponse struct {
 	Id         string        `json:"id"`
 	HostedLink string        `json:"hostedLink"`
 	Status     PaymentStatus `json:"status"`
 }
 
-type NewCustomer struct {
+type CreateCustomerInput struct {
 	Email     string `json:"email"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
-	CountryID   string `json:"country"`
+	CountryID string `json:"country"`
 }
 
 type Customer struct {
@@ -92,4 +102,31 @@ type Customer struct {
 	FirstName string  `json:"firstName"`
 	LastName  string  `json:"lastName"`
 	Country   Country `json:"country"`
+}
+
+type AddPaymentMethodInput struct {
+	CustomerID          string `json:"customer"`
+	PaymentMethodTypeID string `json:"p2pPaymentMethodType"`
+	Fields              []struct {
+		Identifier string `json:"identifier"`
+		Value      string `json:"value"`
+	} `json:"fields"`
+}
+
+type AddPaymentMethodResponse struct {
+	ID     string `json:"id"`
+	Value  string `json:"value"`
+	Fields []struct {
+		Identifier string `json:"identifier"`
+		Value      string `json:"value"`
+	} `json:"fields"`
+}
+type WithdrawOnchainInput struct {
+	Address string `json:"address"`
+	Amount  string `json:"amount"`
+}
+
+type WithdrawOnchainResponse struct {
+	ID     string `json:"id"`
+	Status string `json:"status"`
 }

@@ -182,7 +182,7 @@ func (c *Client) GetAccount() (*types.Account, error) {
 
 // Mutations
 
-func (c *Client) ConfirmTransaction(paymentRequest types.PaymentRequest) (bool, error) {
+func (c *Client) ConfirmTransaction(paymentRequest types.ConfirmTransactionInput) (bool, error) {
 	confirmedPayment, err := sendRequestTyped[bool](c, "confirmTransaction", mutations.CONFIRM_TRANSACTION, paymentRequest)
 	if err != nil {
 		return false, err
@@ -190,7 +190,7 @@ func (c *Client) ConfirmTransaction(paymentRequest types.PaymentRequest) (bool, 
 	return confirmedPayment, nil
 }
 
-func (c *Client) InitiateHostedPayment(payment types.HostedPayment) (*types.HostedPaymentResponse, error) {
+func (c *Client) InitiateHostedPayment(payment types.InitiateHostedPaymentInput) (*types.HostedPaymentResponse, error) {
 	initiatedPayment, err := sendRequestTyped[types.HostedPaymentResponse](c, "initiateHostedPayment", mutations.INITIATE_HOSTED_PAYMENT, payment)
 	if err != nil {
 		return nil, err
@@ -198,7 +198,7 @@ func (c *Client) InitiateHostedPayment(payment types.HostedPayment) (*types.Host
 	return &initiatedPayment, nil
 }
 
-func (c *Client) CancelHostedPayment(payment types.HostedPayment) (bool, error) {
+func (c *Client) CancelHostedPayment(payment types.CancelHostedPaymentInput) (bool, error) {
 	initiatedPayment, err := sendRequestTyped[bool](c, "cancelHostedPayment", mutations.CANCEL_HOSTED_PAYMENT, payment)
 	if err != nil {
 		return false, err
@@ -206,7 +206,7 @@ func (c *Client) CancelHostedPayment(payment types.HostedPayment) (bool, error) 
 	return initiatedPayment, nil
 }
 
-func (c *Client) CreateCustomer(customer types.NewCustomer) (*types.Customer, error) {
+func (c *Client) CreateCustomer(customer types.CreateCustomerInput) (*types.Customer, error) {
 	createdCustomer, err := sendRequestTyped[types.Customer](c, "createCustomer", mutations.CREATE_CUSTOMER, customer)
 	if err != nil {
 		return nil, err
@@ -214,20 +214,20 @@ func (c *Client) CreateCustomer(customer types.NewCustomer) (*types.Customer, er
 	return &createdCustomer, nil
 }
 
-func (c *Client) AddPaymentMethod(payment types.HostedPayment) (bool, error) {
-	initiatedPayment, err := sendRequestTyped[bool](c, "addPaymentMethod", mutations.ADD_PAYMENT_METHOD, payment)
+func (c *Client) AddPaymentMethod(payment types.AddPaymentMethodInput) (*types.AddPaymentMethodResponse, error) {
+	initiatedPayment, err := sendRequestTyped[types.AddPaymentMethodResponse](c, "addPaymentMethod", mutations.ADD_PAYMENT_METHOD, payment)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return initiatedPayment, nil
+	return &initiatedPayment, nil
 }
 
-func (c *Client) WithdrawOnchain(payment types.HostedPayment) (string, error) {
-	initiatedPayment, err := sendRequestTyped[string](c, "withdrawOnchain", mutations.WITHDRAW_ONCHAIN, payment)
+func (c *Client) WithdrawOnchain(payment types.WithdrawOnchainInput) (*types.WithdrawOnchainResponse, error) {
+	initiatedPayment, err := sendRequestTyped[types.WithdrawOnchainResponse](c, "withdrawOnchain", mutations.WITHDRAW_ONCHAIN, payment)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return initiatedPayment, nil
+	return &initiatedPayment, nil
 }
 
 // TODO: return error message from the server when there is one
@@ -276,7 +276,7 @@ func validateSecretKey(secretKey string) (string, error) {
 	case "":
 		secretFromEnv := os.Getenv("CASHRAMP_SECRET_KEY")
 		if secretFromEnv == "" {
-			return "", errors.New("Please provide your API secret key")
+			return "", errors.New("please provide your API secret key")
 		} else {
 			secret = secretFromEnv
 		}
