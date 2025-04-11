@@ -57,7 +57,7 @@ const (
 			}
 		}
 	`
-	
+
 	PAYMENT_REQUEST = `
 		query ($reference: String!) {
 			merchantPaymentRequest(reference: $reference) {
@@ -71,7 +71,7 @@ const (
 			}
 		}
 	`
-	
+
 	ACCOUNT = `
 		query {
 			account {
@@ -82,4 +82,3 @@ const (
 		}
 	`
 )
-

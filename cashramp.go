@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/rockets-hq/cashramp-sdk-go/mutations"
 	"github.com/rockets-hq/cashramp-sdk-go/queries"
+	"github.com/rockets-hq/cashramp-sdk-go/types"
 )
 
 const host = "api.useaccrue.com"
@@ -60,18 +62,6 @@ func InitialiseClient(environment, secretKey string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) GetAvailableCountries() (*CashrampResponse, error) {
-	return c.SendRequest("availableCountries", queries.AVAILABLE_COUNTRIES, nil)
-}
-
-func (c *Client) GetMarketRate(countryCode string) (*CashrampResponse, error) {
-	variables := map[string]string{
-		"countryCode": countryCode,
-	}
-
-	return c.SendRequest("marketRate", queries.MARKET_RATE, variables)
-}
-
 func (c *Client) SendRequest(name, query string, variables any) (*CashrampResponse, error) {
 	response := &CashrampResponse{}
 	requestBody := &reqBody{
@@ -121,6 +111,144 @@ func (c *Client) SendRequest(name, query string, variables any) (*CashrampRespon
 	}
 
 	return response, nil
+}
+
+func (c *Client) GetAvailableCountries() ([]types.Country, error) {
+	return sendRequestTyped[[]types.Country](c, "availableCountries", queries.AVAILABLE_COUNTRIES, nil)
+}
+
+func (c *Client) GetMarketRate(countryCode string) (*types.MarketRate, error) {
+	variables := map[string]string{
+		"countryCode": countryCode,
+	}
+
+	marketRate, err := sendRequestTyped[types.MarketRate](c, "marketRate", queries.MARKET_RATE, variables)
+	if err != nil {
+		return nil, err
+	}
+	return &marketRate, nil
+}
+
+func (c *Client) GetPaymentMethodTypes(countryId string) ([]types.PaymentMethodTypes, error) {
+	variables := map[string]string{
+		"country": countryId,
+	}
+
+	paymentMethodTypes, err := sendRequestTyped[[]types.PaymentMethodTypes](c, "p2pPaymentMethodTypes", queries.PAYMENT_METHOD_TYPES, variables)
+	if err != nil {
+		return nil, err
+	}
+	return paymentMethodTypes, nil
+}
+
+func (c *Client) GetRampableAssets() ([]types.RampableAssets, error) {
+	rampableAssets, err := sendRequestTyped[[]types.RampableAssets](c, "rampableAssets", queries.RAMPABLE_ASSETS, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return rampableAssets, nil
+}
+
+func (c *Client) GetRampLimits() (*types.RampLimits, error) {
+	rampLimits, err := sendRequestTyped[types.RampLimits](c, "rampLimits", queries.RAMP_LIMITS, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &rampLimits, err
+}
+
+func (c *Client) GetPaymentRequest(reference string) (*types.PaymentRequest, error) {
+	variables := map[string]string{
+		"reference": reference,
+	}
+	paymentRequest, err := sendRequestTyped[types.PaymentRequest](c, "merchantPaymentRequest", queries.PAYMENT_REQUEST, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	return &paymentRequest, nil
+}
+
+func (c *Client) GetAccount() (*types.Account, error) {
+	account, err := sendRequestTyped[types.Account](c, "account", queries.ACCOUNT, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &account, nil
+}
+
+// Mutations
+
+func (c *Client) ConfirmTransaction(paymentRequest types.PaymentRequest) (bool, error) {
+	confirmedPayment, err := sendRequestTyped[bool](c, "confirmTransaction", mutations.CONFIRM_TRANSACTION, paymentRequest)
+	if err != nil {
+		return false, err
+	}
+	return confirmedPayment, nil
+}
+
+func (c *Client) InitiateHostedPayment(payment types.HostedPayment) (*types.HostedPaymentResponse, error) {
+	initiatedPayment, err := sendRequestTyped[types.HostedPaymentResponse](c, "initiateHostedPayment", mutations.INITIATE_HOSTED_PAYMENT, payment)
+	if err != nil {
+		return nil, err
+	}
+	return &initiatedPayment, nil
+}
+
+func (c *Client) CancelHostedPayment(payment types.HostedPayment) (bool, error) {
+	initiatedPayment, err := sendRequestTyped[bool](c, "cancelHostedPayment", mutations.CANCEL_HOSTED_PAYMENT, payment)
+	if err != nil {
+		return false, err
+	}
+	return initiatedPayment, nil
+}
+
+func (c *Client) CreateCustomer(customer types.NewCustomer) (*types.Customer, error) {
+	createdCustomer, err := sendRequestTyped[types.Customer](c, "createCustomer", mutations.CREATE_CUSTOMER, customer)
+	if err != nil {
+		return nil, err
+	}
+	return &createdCustomer, nil
+}
+
+func (c *Client) AddPaymentMethod(payment types.HostedPayment) (bool, error) {
+	initiatedPayment, err := sendRequestTyped[bool](c, "addPaymentMethod", mutations.ADD_PAYMENT_METHOD, payment)
+	if err != nil {
+		return false, err
+	}
+	return initiatedPayment, nil
+}
+
+func (c *Client) WithdrawOnchain(payment types.HostedPayment) (string, error) {
+	initiatedPayment, err := sendRequestTyped[string](c, "withdrawOnchain", mutations.WITHDRAW_ONCHAIN, payment)
+	if err != nil {
+		return "", err
+	}
+	return initiatedPayment, nil
+}
+
+// TODO: return error message from the server when there is one
+func sendRequestTyped[T any](client *Client, name, query string, variables any) (T, error) {
+	var out T
+	resp, err := client.SendRequest(name, query, variables)
+	if err != nil {
+		return out, err
+	}
+
+	if !resp.Success {
+		return out, fmt.Errorf("request failed: %s", resp.Error)
+	}
+
+	// Convert the generic result into typed output
+	raw, err := json.Marshal(resp.Result)
+	if err != nil {
+		return out, err
+	}
+	err = json.Unmarshal(raw, &out)
+	return out, err
 }
 
 func validateEnv(env string) (environment string, apiUrl string, err error) {
