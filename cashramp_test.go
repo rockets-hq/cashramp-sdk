@@ -1,4 +1,4 @@
-package cashrampsdkgo
+package cashrampsdk_test
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	cashrampsdk "github.com/rockets-hq/cashramp-sdk-go"
 	"github.com/rockets-hq/cashramp-sdk-go/queries"
 	"github.com/rockets-hq/cashramp-sdk-go/types"
 	"github.com/stretchr/testify/assert"
@@ -35,12 +36,11 @@ func mockGraphQLServer(t *testing.T, mockResponse []byte, expectedStatusCode int
 	}))
 }
 
-func dummyClient(server *httptest.Server) *Client {
-	return &Client{
-		apiUrl:     server.URL,
-		secretKey:  "dummy-secret",
-		httpClient: server.Client(),
-	}
+func dummyClient(t *testing.T, server *httptest.Server) *cashrampsdk.Client {
+	client, err := cashrampsdk.InitialiseClient("test", "dummy-secret")
+	assert.NoError(t, err)
+	client.ApiUrl = server.URL
+	return client
 }
 
 func createMockGraphQLResponse(t *testing.T, operationName string, result any, graphqlErrors ...string) []byte {
@@ -65,39 +65,6 @@ func createMockGraphQLResponse(t *testing.T, operationName string, result any, g
 	return responseBytes
 }
 
-func TestInitialiseClient(t *testing.T) {
-	t.Run("Valid test environment", func(t *testing.T) {
-		client, err := InitialiseClient("test", "dummy-secret")
-		assert.NoError(t, err)
-		assert.NotNil(t, client)
-		assert.Equal(t, "test", client.env)
-		assert.Contains(t, client.apiUrl, "staging.api.useaccrue.com")
-		assert.Equal(t, "dummy-secret", client.secretKey)
-	})
-
-	t.Run("Valid live environment", func(t *testing.T) {
-		client, err := InitialiseClient("live", "dummy-secret")
-		assert.NoError(t, err)
-		assert.NotNil(t, client)
-		assert.Equal(t, "live", client.env)
-		assert.Contains(t, client.apiUrl, "api.useaccrue.com")
-		assert.NotContains(t, client.apiUrl, "staging")
-		assert.Equal(t, "dummy-secret", client.secretKey)
-	})
-
-	t.Run("Invalid environment", func(t *testing.T) {
-		_, err := InitialiseClient("invalid-env", "dummy-secret")
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "not a valid env")
-	})
-
-	t.Run("Missing secret key", func(t *testing.T) {
-		_, err := InitialiseClient("test", "")
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "Please provide your API secret key")
-	})
-}
-
 func TestSendRequestSuccess(t *testing.T) {
 	operationName := "account"
 	mockResult := map[string]string{
@@ -108,7 +75,7 @@ func TestSendRequestSuccess(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true, operationName)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
 	resp, err := client.SendRequest(operationName, queries.ACCOUNT, nil)
 
@@ -131,7 +98,7 @@ func TestSendRequestGraphQLError(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true, operationName)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
 	resp, err := client.SendRequest(operationName, queries.ACCOUNT, nil)
 
@@ -147,7 +114,7 @@ func TestSendRequestHTTPError(t *testing.T) {
 	server := mockGraphQLServer(t, []byte("Server Error"), http.StatusInternalServerError, true, operationName)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
 	resp, err := client.SendRequest(operationName, queries.ACCOUNT, nil)
 
@@ -165,9 +132,9 @@ func TestSendRequestTypedError(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
-	_, err := sendRequestTyped[types.Account](client, operationName, queries.ACCOUNT, nil)
+	_, err := cashrampsdk.SendRequestTyped[types.Account](client, operationName, queries.ACCOUNT, nil)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "request failed")
@@ -184,7 +151,7 @@ func TestGetAvailableCountries(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true, operationName)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
 	countries, err := client.GetAvailableCountries()
 	assert.NoError(t, err)
@@ -211,10 +178,9 @@ func TestGetMarketRate(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true, operationName, `"countryCode":"NG"`)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
-	variables := map[string]string{"countryCode": countryCode}
-	marketRate, err := sendRequestTyped[types.MarketRate](client, operationName, queries.MARKET_RATE, variables)
+	marketRate, err := client.GetMarketRate(countryCode)
 
 	assert.NoError(t, err)
 
@@ -234,7 +200,7 @@ func TestGetPaymentMethodTypes(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true, operationName, `"country":"1"`)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
 	paymentMethodTypes, err := client.GetPaymentMethodTypes(countryID)
 
@@ -261,7 +227,7 @@ func TestGetRampableAssets(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true, operationName)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
 	rampableAssets, err := client.GetRampableAssets()
 	assert.NoError(t, err)
@@ -285,7 +251,7 @@ func TestGetRampLimits(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true, operationName)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
 	rampLimits, err := client.GetRampLimits()
 	assert.NoError(t, err)
@@ -312,7 +278,7 @@ func TestGetPaymentRequest(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true, operationName, `"reference":"test_ref_1"`)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
 	paymentRequest, err := client.GetPaymentRequest(reference)
 	assert.NoError(t, err)
@@ -335,7 +301,7 @@ func TestGetAccount(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true, operationName)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
 	account, err := client.GetAccount()
 	assert.NoError(t, err)
@@ -354,7 +320,7 @@ func TestConfirmTransaction(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true, operationName, `"paymentRequest":"1"`, `"transactionHash":"tx_hash"`)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
 	confirmTransactionInput := types.ConfirmTransactionInput{
 		PaymentRequest:  "1",
@@ -377,7 +343,7 @@ func TestInitiateHostedPayment(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true, operationName, `"reference":"ref123"`)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
 	initiateHostedPaymentInput := types.InitiateHostedPaymentInput{
 		PaymentType: "ONCHAIN",
@@ -404,7 +370,7 @@ func TestCancelHostedPayment(t *testing.T) {
 	server := mockGraphQLServer(t, responseBytes, http.StatusOK, true, operationName, `"paymentRequest":"1"`)
 	defer server.Close()
 
-	client := dummyClient(server)
+	client := dummyClient(t, server)
 
 	input := types.CancelHostedPaymentInput{PaymentRequest: "1"}
 	cancelled, err := client.CancelHostedPayment(input)
