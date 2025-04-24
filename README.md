@@ -61,17 +61,19 @@ log.Println(countries)
 For advanced use cases where the provided methods don't cover your specific needs, you can use the `sendRequest` method to send custom GraphQL queries:
 
 ```go
-query := `query {
-			availableCountries {
-				id
+query := `
+	query {
+		availableCountries {
+			id
+			name
+			code
+			currency {
+				isoCode
 				name
-				code
-				currency {
-					isoCode
-					name
-				}
 			}
-		}`
+		}
+	}
+`
 
 response, err := cashrampApi.SendRequest("availableCountries", query, nil)
 if err != nil {
