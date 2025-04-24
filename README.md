@@ -67,7 +67,7 @@ query := `
 			id
 			name
 			code
-		   currency {
+		  currency {
 				isoCode
 				name
 			}
