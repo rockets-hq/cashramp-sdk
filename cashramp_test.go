@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	cashrampsdk "github.com/rockets-hq/cashramp-sdk-go"
-	"github.com/rockets-hq/cashramp-sdk-go/queries"
-	"github.com/rockets-hq/cashramp-sdk-go/types"
+	cashrampsdk "github.com/rockets-hq/cashramp-sdk"
+	"github.com/rockets-hq/cashramp-sdk/queries"
+	"github.com/rockets-hq/cashramp-sdk/types"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/rockets-hq/cashramp-sdk-go/mutations"
-	"github.com/rockets-hq/cashramp-sdk-go/queries"
-	"github.com/rockets-hq/cashramp-sdk-go/types"
+	"github.com/rockets-hq/cashramp-sdk/mutations"
+	"github.com/rockets-hq/cashramp-sdk/queries"
+	"github.com/rockets-hq/cashramp-sdk/types"
 )
 
 const host = "api.useaccrue.com"

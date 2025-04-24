@@ -1,4 +1,4 @@
-module github.com/rockets-hq/cashramp-sdk-go
+module github.com/rockets-hq/cashramp-sdk
 
 go 1.23.5
 
