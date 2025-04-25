@@ -1,4 +1,5 @@
 <p align="center">
+  <a href="https://github.com/rockets-hq/cashramp-sdk/"><img src="https://github.com/rockets-hq/cashramp-sdk/actions/workflows/test.yml/badge.svg" /></a>
   <img alt="Last Commit" src="https://badgen.net/github/last-commit/rockets-hq/cashramp-sdk" />
   <a href="https://github.com/rockets-hq/cashramp-sdk/"><img src="https://img.shields.io/github/stars/rockets-hq/cashramp-sdk.svg"/></a>
   <a href="https://github.com/rockets-hq/cashramp-sdk/"><img src="https://img.shields.io/npm/l/cashramp.svg"/></a>
